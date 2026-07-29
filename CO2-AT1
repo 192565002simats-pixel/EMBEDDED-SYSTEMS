@@ -1,0 +1,78 @@
+#include <systemc>
+using namespace sc_core;
+using namespace std;
+
+// Smart HVAC Controller Module
+SC_MODULE(HVAC_Controller)
+{
+    sc_in<int> temperature;
+    sc_in<int> humidity;
+
+    void control()
+    {
+        int temp = temperature.read();
+        int hum = humidity.read();
+
+        cout << "-------------------------------------" << endl;
+        cout << "Temperature : " << temp << " C" << endl;
+        cout << "Humidity    : " << hum << " %" << endl;
+
+        if (temp < 20)
+        {
+            cout << "Heater : ON" << endl;
+            cout << "Fan    : OFF" << endl;
+            cout << "AC     : OFF" << endl;
+        }
+        else if (temp >= 20 && temp <= 25)
+        {
+            cout << "Heater : OFF" << endl;
+            cout << "Fan    : OFF" << endl;
+            cout << "AC     : OFF" << endl;
+        }
+        else
+        {
+            cout << "Heater : OFF" << endl;
+            cout << "Fan    : ON" << endl;
+            cout << "AC     : ON" << endl;
+        }
+
+        if (hum > 70)
+            cout << "Humidity Alert : HIGH" << endl;
+        else
+            cout << "Humidity Status: NORMAL" << endl;
+    }
+
+    SC_CTOR(HVAC_Controller)
+    {
+        SC_METHOD(control);
+        sensitive << temperature << humidity;
+    }
+};
+
+int sc_main(int argc, char* argv[])
+{
+    sc_signal<int> temperature;
+    sc_signal<int> humidity;
+
+    HVAC_Controller hvac("HVAC");
+
+    hvac.temperature(temperature);
+    hvac.humidity(humidity);
+
+    // Test Case 1
+    temperature.write(18);
+    humidity.write(45);
+    sc_start(1, SC_NS);
+
+    // Test case 2
+    temperature.write(23);
+    humidity.write(50);
+    sc_start(1, SC_NS);
+
+    // Test case 3
+    temperature.write(30);
+    humidity.write(80);
+    sc_start(1, SC_NS);
+
+    return 0;
+}
