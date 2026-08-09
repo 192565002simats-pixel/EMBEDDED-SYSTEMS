@@ -1,0 +1,90 @@
+#include <reg51.h>
+
+#define TIMEOUT 50000
+
+void UART_Init(void);
+void UART_SendChar(char ch);
+void UART_SendString(char *str);
+unsigned char UART_ReceiveChar(char *ch);
+
+/* UART Initialization */
+void UART_Init(void)
+{
+    TMOD = 0x20;       // Timer 1, Mode 2
+    TH1 = 0xFD;        // 9600 baud for 11.0592 MHz crystal
+    SCON = 0x50;       // Serial mode 1, 8-bit UART, receiver enabled
+    TR1 = 1;           // Start Timer 1
+    TI = 1;            // Ready for transmission
+}
+
+/* Send one character */
+void UART_SendChar(char ch)
+{
+    SBUF = ch;
+
+    while (TI == 0)
+    {
+        /* Wait until transmission is complete */
+    }
+
+    TI = 0;
+}
+
+/* Send a string */
+void UART_SendString(char *str)
+{
+    while (*str != '\0')
+    {
+        UART_SendChar(*str);
+        str++;
+    }
+}
+
+/* Receive character with timeout */
+unsigned char UART_ReceiveChar(char *ch)
+{
+    unsigned long timeout = 0;
+
+    while (RI == 0)
+    {
+        timeout++;
+
+        if (timeout >= TIMEOUT)
+        {
+            return 0;       // Timeout occurred
+        }
+    }
+
+    *ch = SBUF;
+    RI = 0;
+
+    return 1;               // Character received successfully
+}
+
+/* Main program */
+void main(void)
+{
+    char receivedChar;
+
+    UART_Init();
+
+    UART_SendString("UART Communication Started\r\n");
+
+    while (1)
+    {
+        UART_SendString("Waiting for data...\r\n");
+
+        if (UART_ReceiveChar(&receivedChar))
+        {
+            UART_SendString("Received: ");
+            UART_SendChar(receivedChar);
+            UART_SendString("\r\n");
+
+            UART_SendString("Data received successfully\r\n");
+        }
+        else
+        {
+            UART_SendString("ERROR: UART Timeout\r\n");
+        }
+    }
+}
